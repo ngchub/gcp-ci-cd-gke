@@ -1,0 +1,76 @@
+1
+gcloud config set project <onboard-demo-egitim>
+
+2
+gcloud services enable cloudbuild.googleapis.com clouddeploy.googleapis.com artifactregistry.googleapis.com container.googleapis.com
+
+
+PROJECT_ID=onboard-demo-egitim
+
+echo $PROJECT_ID
+
+3
+gcloud projects add-iam-policy-binding ${PROJECT_ID} \
+    --member=serviceAccount:$(gcloud projects describe ${PROJECT_ID} \
+    --format="value(projectNumber)")-compute@developer.gserviceaccount.com \
+    --role="roles/clouddeploy.jobRunner"
+
+gcloud projects add-iam-policy-binding ${PROJECT_ID} \
+    --member=serviceAccount:$(gcloud projects describe ${PROJECT_ID} \
+    --format="value(projectNumber)")-compute@developer.gserviceaccount.com \
+    --role="roles/container.developer"
+
+gcloud projects add-iam-policy-binding ${PROJECT_ID} \
+    --member=serviceAccount:$(gcloud projects describe ${PROJECT_ID} \
+    --format="value(projectNumber)")@cloudbuild.gserviceaccount.com \
+    --role="roles/artifactregistry.writer"
+
+gcloud projects add-iam-policy-binding ${PROJECT_ID} \
+    --member=serviceAccount:$(gcloud projects describe ${PROJECT_ID} \
+    --format="value(projectNumber)")-compute@developer.gserviceaccount.com \
+    --role="roles/artifactregistry.reader"
+
+
+gcloud projects add-iam-policy-binding ${PROJECT_ID} \
+    --member=serviceAccount:$(gcloud projects describe ${PROJECT_ID} \
+    --format="value(projectNumber)")@cloudbuild.gserviceaccount.com \
+    --role="roles/clouddeploy.releaser"
+
+gcloud projects add-iam-policy-binding ${PROJECT_ID} \
+    --member=serviceAccount:$(gcloud projects describe ${PROJECT_ID} \
+    --format="value(projectNumber)")-compute@developer.gserviceaccount.com \
+    --role="roles/clouddeploy.releaser"
+
+gcloud iam service-accounts add-iam-policy-binding  $(gcloud projects describe ${PROJECT_ID} \
+    --format="value(projectNumber)")-compute@developer.gserviceaccount.com \
+    --member=serviceAccount:$(gcloud projects describe ${PROJECT_ID} \
+    --format="value(projectNumber)")@cloudbuild.gserviceaccount.com \
+    --role="roles/clouddeploy.serviceAgent"
+
+# Create default VPC only if it does not yet exist
+
+4
+gcloud compute networks create default --project=${PROJECT_ID} --subnet-mode=auto --mtu=1460 --bgp-routing-mode=regional
+
+# Instances on this network will not be reachable until firewall rules
+are created. As an example, you can allow all internal traffic between
+instances as well as SSH, RDP, and ICMP by running:
+
+$ gcloud compute firewall-rules create <FIREWALL_NAME> --network default --allow tcp,udp,icmp --source-ranges <IP_RANGE>
+$ gcloud compute firewall-rules create new-k8s --network default --allow tcp:22,tcp:3389,icmp
+
+5
+gcloud compute firewall-rules create new-k8s --network default --allow tcp:22,tcp:3389,icmp
+
+6
+gcloud container clusters create-auto cluster-1 --project=${PROJECT_ID} --region=us-central1
+
+7
+gcloud artifacts repositories \
+     create my-docker-repo \
+     --repository-format=docker \
+     --location=us-central1 \
+     --description="Docker repository"
+
+
+# Sync Trigger with your GitHub repo in Cloud Build, hit create trigger in trigger tab
