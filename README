@@ -74,3 +74,30 @@ gcloud artifacts repositories \
 
 
 # Sync Trigger with your GitHub repo in Cloud Build, hit create trigger in trigger tab
+
+8
+git clone https://github.com/samy-fadel/gcp-ci-cd-gke.git
+
+Copy the content into your own local laptop repo and make sure to write the value of your own project id in codedeploy.yaml
+Install gcloud on your laptop by following these instructions
+cd into your repo and then deploy pipeline with
+
+
+9
+gcloud deploy apply --file=clouddeploy.yaml \
+    --region us-central1 \
+    --project=${PROJECT_ID}
+
+
+Then cd into your local repo and push the copied code to your main remote GitHub branch that is connected to the Cloud Build Trigger previously created :
+
+10
+git add .
+git commit -m "first commit"
+git push
+
+
+This will trigger the pipeline.
+Wait a few minutes
+Go to GKE console in “Services & Ingress” tab and click on the endpoint IP to check your newly deployed website
+Now you can work on your code app and improve it !
